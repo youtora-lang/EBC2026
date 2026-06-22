@@ -10,9 +10,10 @@ export async function GET(request: NextRequest) {
   const forwardedProto = request.headers.get('x-forwarded-proto') ?? 'https'
   const baseUrl = forwardedHost ? `${forwardedProto}://${forwardedHost}` : origin
 
-  // code が無ければ交換不可。明示的にエラー遷移。
+  // code が無ければ交換不可。どの分岐で落ちたか判別するため nocode を付与。
   if (!code) {
-    return NextResponse.redirect(`${baseUrl}/?error=auth`)
+    console.error('[auth callback] missing code param')
+    return NextResponse.redirect(`${baseUrl}/?error=nocode`)
   }
 
   // 成功時に返すレスポンスを先に生成し、Cookieはこのレスポンスへ直接書き込む（proxy.tsと同じ堅牢な方式）。
@@ -38,8 +39,12 @@ export async function GET(request: NextRequest) {
   const { error } = await supabase.auth.exchangeCodeForSession(code)
 
   // 交換失敗時は無言で /dashboard に飛ばさず、原因を可視化して / へ戻す。
+  // Vercelのfunction logにも残し、エラー本文を reason として付与する。
   if (error) {
-    return NextResponse.redirect(`${baseUrl}/?error=auth`)
+    console.error('[auth callback] exchange failed:', error.message, error.status)
+    return NextResponse.redirect(
+      `${baseUrl}/?error=exchange&reason=${encodeURIComponent(error.message)}`
+    )
   }
 
   // 成功時のみ、Cookieが書き込まれた response（/dashboard へのリダイレクト）を返す。
