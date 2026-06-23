@@ -1,10 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Mic, LogOut } from 'lucide-react'
+import { Plus, Mic } from 'lucide-react'
 import { getThumbnailUrl } from '@/lib/youtube'
 import { Session } from '@/types'
-import SignOutButton from './SignOutButton'
+import AppHeader from '@/components/AppHeader'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -19,24 +19,24 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen bg-[#0A0A0A]">
       {/* ヘッダー */}
-      <header className="border-b border-[#2A2A2A] bg-[#0A0A0A] sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
+      <AppHeader
+        maxWidth="max-w-4xl"
+        left={
           <div className="flex items-center gap-2">
             <Mic className="w-5 h-5 text-[#FF6B35]" />
             <span className="font-semibold text-white">Mimicking App</span>
           </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/practice/new"
-              className="flex items-center gap-1.5 bg-[#FF6B35] hover:bg-[#FF8555] text-white text-sm font-medium py-1.5 px-3 rounded-lg transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              新しい練習
-            </Link>
-            <SignOutButton />
-          </div>
-        </div>
-      </header>
+        }
+        actions={
+          <Link
+            href="/practice/new"
+            className="flex items-center gap-1.5 bg-[#FF6B35] hover:bg-[#FF8555] text-white text-sm font-medium py-1.5 px-3 rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            新しい練習
+          </Link>
+        }
+      />
 
       {/* メインコンテンツ */}
       <main className="max-w-4xl mx-auto px-4 py-8">

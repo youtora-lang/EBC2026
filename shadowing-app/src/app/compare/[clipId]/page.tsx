@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
 import { ArrowLeft, Volume2, VolumeX, Download, RotateCcw } from 'lucide-react'
 import { usePracticeStore } from '@/store/practiceStore'
+import AppHeader from '@/components/AppHeader'
 import type { YouTubePlayer as YTPlayer } from 'react-youtube'
 
 const YouTubePlayer = dynamic(() => import('@/components/YouTubePlayer'), { ssr: false })
@@ -84,18 +85,20 @@ export default function ComparePage() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] flex flex-col">
-      <header className="border-b border-[#2A2A2A]">
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-3">
-          <Link
-            href={`/practice/${clipId}`}
-            className="p-1.5 text-[#9A9A9A] hover:text-white rounded-lg hover:bg-[#1A1A1A] transition-colors"
-            aria-label="練習に戻る"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <h1 className="text-white font-semibold">比較再生</h1>
-        </div>
-      </header>
+      <AppHeader
+        left={
+          <>
+            <Link
+              href={`/practice/${clipId}`}
+              className="p-1.5 text-[#9A9A9A] hover:text-white rounded-lg hover:bg-[#1A1A1A] transition-colors"
+              aria-label="練習に戻る"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+            <h1 className="text-white font-semibold">比較再生</h1>
+          </>
+        }
+      />
 
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-6 flex flex-col gap-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

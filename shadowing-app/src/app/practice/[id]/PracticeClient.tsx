@@ -7,6 +7,7 @@ import { ArrowLeft, Columns2 } from 'lucide-react'
 import { Session } from '@/types'
 import { usePracticeStore } from '@/store/practiceStore'
 import { useSubtitles } from '@/hooks/useSubtitles'
+import AppHeader from '@/components/AppHeader'
 import SubtitleDisplay from '@/components/SubtitleDisplay'
 import PracticeControls from '@/components/PracticeControls'
 import WebcamRecorder from '@/components/WebcamRecorder'
@@ -54,9 +55,9 @@ export default function PracticeClient({ session }: Props) {
   return (
     <div className="min-h-screen bg-[#0A0A0A] flex flex-col">
       {/* ヘッダー */}
-      <header className="border-b border-[#2A2A2A] flex-shrink-0">
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
+      <AppHeader
+        left={
+          <>
             <Link
               href="/dashboard"
               className="p-1.5 text-[#9A9A9A] hover:text-white rounded-lg hover:bg-[#1A1A1A] transition-colors flex-shrink-0"
@@ -65,8 +66,10 @@ export default function PracticeClient({ session }: Props) {
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <h1 className="text-white font-medium text-sm truncate">{session.title}</h1>
-          </div>
-          {recordingBlob && (
+          </>
+        }
+        actions={
+          recordingBlob && (
             <Link
               href={`/compare/${session.id}?v=${session.video_id}`}
               className="flex items-center gap-1.5 text-sm text-[#FF6B35] hover:text-[#FF8555] transition-colors flex-shrink-0"
@@ -74,9 +77,9 @@ export default function PracticeClient({ session }: Props) {
               <Columns2 className="w-4 h-4" />
               比較再生
             </Link>
-          )}
-        </div>
-      </header>
+          )
+        }
+      />
 
       {/* メインコンテンツ */}
       <div className="flex-1 flex flex-col lg:flex-row max-w-6xl mx-auto w-full">
