@@ -11,10 +11,11 @@ export function useMediaRecorder(streamRef: React.RefObject<MediaStream | null>)
   const chunksRef = useRef<BlobPart[]>([])
   const { setIsRecording, setRecordingBlob, currentTime, setRecordingStartTime } = usePracticeStore()
 
-  const startRecording = useCallback(() => {
+  // startPosition: お手本が実際に再生開始した位置（比較再生の同期基準）。
+  // 省略時は従来どおり現在のYouTube位置にフォールバック。
+  const startRecording = useCallback((startPosition?: number) => {
     if (!streamRef.current) return
-    // 録画開始時点のYouTube位置を保存（比較再生の同期基準）
-    setRecordingStartTime(currentTime)
+    setRecordingStartTime(startPosition ?? currentTime)
     chunksRef.current = []
     const mimeType = getSupportedMimeType()
     const recorder = new MediaRecorder(streamRef.current, mimeType ? { mimeType } : undefined)
@@ -36,13 +37,5 @@ export function useMediaRecorder(streamRef: React.RefObject<MediaStream | null>)
     setIsRecording(false)
   }, [setIsRecording])
 
-  const toggleRecording = useCallback(() => {
-    if (recorderRef.current?.state === 'recording') {
-      stopRecording()
-    } else {
-      startRecording()
-    }
-  }, [startRecording, stopRecording])
-
-  return { toggleRecording, startRecording, stopRecording }
+  return { startRecording, stopRecording }
 }

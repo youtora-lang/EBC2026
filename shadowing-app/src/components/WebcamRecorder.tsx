@@ -2,16 +2,23 @@
 
 import { useRef, useEffect, useState } from 'react'
 import { usePracticeStore } from '@/store/practiceStore'
-import { useMediaRecorder } from '@/hooks/useMediaRecorder'
 import { VideoOff, AlertCircle } from 'lucide-react'
 
-export default function WebcamRecorder() {
+type Props = {
+  /** 取得したカメラ/マイクのstreamを親（録画ロジック）へ渡す */
+  onStreamReady?: (stream: MediaStream) => void
+  /** 録画ボタン押下時の処理。親（PracticeClient）が定義する */
+  onToggleRecord: () => void
+}
+
+export default function WebcamRecorder({ onStreamReady, onToggleRecord }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const [camError, setCamError] = useState<string | null>(null)
   const [camReady, setCamReady] = useState(false)
+  // ダウンロードファイル名はマウント時に一度だけ決定（描画中に Date.now を呼ばない）
+  const [downloadName] = useState(() => `shadowing-${Date.now()}.webm`)
   const { isRecording, recordingBlob } = usePracticeStore()
-  const { toggleRecording } = useMediaRecorder(streamRef)
 
   useEffect(() => {
     navigator.mediaDevices
@@ -20,6 +27,7 @@ export default function WebcamRecorder() {
         streamRef.current = stream
         if (videoRef.current) videoRef.current.srcObject = stream
         setCamReady(true)
+        onStreamReady?.(stream)
       })
       .catch((err) => {
         if (err.name === 'NotAllowedError') {
@@ -32,6 +40,8 @@ export default function WebcamRecorder() {
     return () => {
       streamRef.current?.getTracks().forEach((t) => t.stop())
     }
+    // カメラ取得はマウント時に一度だけ。onStreamReadyの同一性に依存させない。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   if (camError) {
@@ -74,7 +84,7 @@ export default function WebcamRecorder() {
 
       {/* 録音ボタン */}
       <button
-        onClick={toggleRecording}
+        onClick={onToggleRecord}
         disabled={!camReady}
         className={`w-full py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
           isRecording
@@ -90,7 +100,7 @@ export default function WebcamRecorder() {
       {recordingBlob && !isRecording && (
         <a
           href={URL.createObjectURL(recordingBlob)}
-          download={`shadowing-${Date.now()}.webm`}
+          download={downloadName}
           className="w-full py-2 rounded-lg text-sm font-medium text-center bg-[#1A1A1A] border border-[#2A2A2A] hover:border-[#FF6B35] text-white transition-colors"
         >
           ↓ 録画をダウンロード

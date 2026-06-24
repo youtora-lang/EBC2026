@@ -1,12 +1,14 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { ArrowLeft, Columns2 } from 'lucide-react'
+import type { YouTubePlayer as YTPlayer } from 'react-youtube'
 import { Session } from '@/types'
 import { usePracticeStore } from '@/store/practiceStore'
 import { useSubtitles } from '@/hooks/useSubtitles'
+import { useMediaRecorder } from '@/hooks/useMediaRecorder'
 import AppHeader from '@/components/AppHeader'
 import SubtitleDisplay from '@/components/SubtitleDisplay'
 import PracticeControls from '@/components/PracticeControls'
@@ -20,14 +22,43 @@ export default function PracticeClient({ session }: Props) {
   const {
     currentTime,
     startTime,
-    endTime,
     setStartTime,
     setEndTime,
     toggleLoop,
     recordingBlob,
+    isRecording,
   } = usePracticeStore()
 
+  // 司令塔として保持する参照（ストアには非シリアライズなオブジェクトを入れない）
+  const playerRef = useRef<YTPlayer | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const pendingRecordRef = useRef(false)
+  const { startRecording, stopRecording } = useMediaRecorder(streamRef)
+
   useSubtitles(session.video_id)
+
+  // 録画ボタン: まずお手本を練習区間の開始位置(未設定なら0)へ送り再生。
+  // 実際にPLAYINGになった瞬間(handlePlayStart)に録画を開始する。
+  const handleToggleRecord = () => {
+    if (isRecording) {
+      stopRecording()
+      return
+    }
+    const anchor = startTime ?? 0
+    pendingRecordRef.current = true
+    const player = playerRef.current
+    if (player) {
+      player.seekTo(anchor, true)
+      player.playVideo()
+    }
+  }
+
+  // お手本が実再生開始した瞬間。録画要求中なら、その位置を基準に録画を開始。
+  const handlePlayStart = () => {
+    if (!pendingRecordRef.current) return
+    pendingRecordRef.current = false
+    startRecording(startTime ?? 0)
+  }
 
   // キーボードショートカット
   useEffect(() => {
@@ -86,13 +117,20 @@ export default function PracticeClient({ session }: Props) {
         {/* 左：YouTube */}
         <div className="flex-1 p-4 flex flex-col gap-4">
           <div className="w-full aspect-video rounded-lg overflow-hidden bg-[#1A1A1A]">
-            <YouTubePlayer videoId={session.video_id} />
+            <YouTubePlayer
+              videoId={session.video_id}
+              onPlayerReady={(p) => { playerRef.current = p }}
+              onPlayStart={handlePlayStart}
+            />
           </div>
         </div>
 
         {/* 右：ウェブカメラ */}
         <div className="lg:w-80 p-4 flex flex-col gap-4 lg:border-l border-[#2A2A2A]">
-          <WebcamRecorder />
+          <WebcamRecorder
+            onStreamReady={(s) => { streamRef.current = s }}
+            onToggleRecord={handleToggleRecord}
+          />
         </div>
       </div>
 
